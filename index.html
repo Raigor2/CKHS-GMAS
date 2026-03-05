@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CKHS · Cross Keys High School GMAS Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:      #080c14;
+  --s1:      #0d1424;
+  --s2:      #131c30;
+  --s3:      #1a2540;
+  --border:  #1e2d45;
+  --border2: #263a55;
+  --cyan:    #22d3ee;
+  --cyan-d:  #0891b2;
+  --amber:   #fbbf24;
+  --rose:    #f43f5e;
+  --emerald: #34d399;
+  --violet:  #a78bfa;
+  --t1: #f0f6ff;
+  --t2: #8ba4c0;
+  --t3: #4a6278;
+  --beg:  #f43f5e;
+  --dev:  #fb923c;
+  --pro:  #34d399;
+  --dis:  #22d3ee;
+  --font:  'Outfit', sans-serif;
+  --mono:  'JetBrains Mono', monospace;
+  --r: 8px;
+}
+
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-family:var(--font);}
+
+.shell{display:grid;grid-template-rows:52px 40px 1fr;height:100vh;overflow:hidden;padding-bottom:28px;}
+.body{display:grid;grid-template-columns:210px 1fr;overflow:hidden;height:calc(100vh - 120px);}
+
+/* TAB STRIP */
+.tabstrip{
+  display:flex;align-items:center;gap:2px;
+  padding:0 20px;
+  background:var(--s1);
+  border-bottom:1px solid var(--border);
+}
+.tab-btn{
+  display:flex;align-items:center;gap:7px;
+  padding:0 16px;height:40px;
+  background:none;border:none;border-bottom:2px solid transparent;
+  font-family:var(--font);font-size:12px;font-weight:600;
+  color:var(--t3);cursor:pointer;
+  transition:color .15s,border-color .15s;
+  letter-spacing:.02em;
+  margin-bottom:-1px;
+}
+.tab-btn:hover{color:var(--t2);}
+.tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+.tab-icon{font-size:13px;}
+
+/* TARGETS VIEW */
+.targets-view{
+  display:none;
+  flex-direction:column;
+  padding:18px 24px;
+  gap:14px;
+  overflow:hidden;
+  height:calc(100vh - 120px);
+  background:var(--bg);
+}
+.targets-view.visible{display:flex;}
+
+.tgt-header{flex-shrink:0;}
+.tgt-title{font-size:15px;font-weight:700;color:var(--t1);}
+.tgt-sub{font-size:11px;color:var(--t3);margin-top:3px;}
+
+.tgt-summary{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;flex-shrink:0;
+}
+.tgt-sum-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 16px;position:relative;overflow:hidden;
+}
+.tgt-sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.tgt-sum-card.all::before{background:var(--cyan);}
+.tgt-sum-card.gap::before{background:var(--amber);}
+.tgt-sum-card.proj::before{background:var(--emerald);}
+.tgt-sum-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;}
+.tgt-sum-val{font-size:26px;font-weight:800;font-family:var(--mono);line-height:1;}
+.tgt-sum-val.cyan{color:var(--cyan);}
+.tgt-sum-val.amber{color:var(--amber);}
+.tgt-sum-val.emerald{color:var(--emerald);}
+.tgt-sum-desc{font-size:10px;color:var(--t3);margin-top:4px;}
+
+.tgt-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+}
+.tgt-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  padding:13px 14px;display:flex;flex-direction:column;gap:8px;
+  transition:border-color .2s;
+}
+.tgt-card:hover{border-color:var(--border2);}
+.tgt-card.insuf{opacity:.55;}
+.tgt-card-group{font-size:11px;font-weight:700;color:var(--t1);}
+.tgt-card-group span{display:block;font-size:9px;font-weight:400;color:var(--t3);margin-top:1px;}
+.tgt-scores{display:flex;justify-content:space-between;align-items:flex-end;}
+.tgt-score-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.tgt-score-val{font-size:18px;font-weight:800;font-family:var(--mono);line-height:1;}
+.tgt-score-lbl{font-size:8px;color:var(--t3);text-align:center;}
+.tgt-arrow{font-size:14px;color:var(--t3);padding-bottom:8px;}
+.tgt-bar-wrap{margin-top:2px;}
+.tgt-bar-bg{height:4px;background:var(--s3);border-radius:4px;overflow:visible;position:relative;}
+.tgt-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;position:relative;}
+.tgt-bar-target{
+  position:absolute;top:-3px;height:10px;width:2px;
+  background:var(--amber);border-radius:1px;
+}
+.tgt-growth{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:9px;font-family:var(--mono);font-weight:700;
+  padding:2px 6px;border-radius:3px;
+  background:rgba(52,211,153,.1);color:var(--emerald);
+  align-self:flex-start;
+}
+
+/* TOPBAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;background:var(--s1);border-bottom:1px solid var(--border);gap:12px;
+}
+.tb-left{display:flex;align-items:center;gap:14px;}
+.tb-logo{
+  width:36px;height:36px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+  overflow:hidden;
+}
+.tb-school{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:.02em;}
+.tb-sub{font-size:10px;color:var(--t3);}
+.tb-divider{width:1px;height:28px;background:var(--border);flex-shrink:0;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.badge-cyan{background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.2);}
+.badge-amber{background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.18);}
+.tb-date{font-size:10px;color:var(--t3);font-family:var(--mono);}
+
+/* SIDEBAR */
+.sidebar{
+  background:var(--s1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;padding:14px 12px;gap:8px;
+}
+.sb-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);padding:0 4px;margin-bottom:2px;}
+
+.cohort-btn{
+  background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);
+  border-radius:var(--r);padding:10px 11px;cursor:pointer;text-align:left;
+  transition:all .15s;width:100%;margin-bottom:2px;
+}
+.cohort-btn:hover{background:rgba(34,211,238,.1);}
+.cohort-btn.active{background:rgba(34,211,238,.13);border-color:rgba(34,211,238,.5);}
+.cb-label{font-size:10px;font-weight:700;color:var(--cyan);letter-spacing:.05em;}
+.cb-sub{font-size:10px;color:var(--t2);margin-top:2px;font-family:var(--mono);}
+
+.teacher-btn{
+  width:100%;background:transparent;border:1px solid var(--border);border-radius:var(--r);
+  padding:9px 11px;cursor:pointer;text-align:left;transition:all .15s;position:relative;overflow:hidden;
+}
+.teacher-btn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cyan);opacity:0;transition:opacity .15s;}
+.teacher-btn:hover{border-color:var(--border2);background:var(--s2);}
+.teacher-btn.active{border-color:rgba(34,211,238,.35);background:rgba(34,211,238,.07);}
+.teacher-btn.active::before{opacity:1;}
+.tb-name{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:5px;}
+.tb-stats{display:flex;gap:5px;flex-wrap:wrap;}
+.tb-stat{font-size:9px;font-family:var(--mono);font-weight:500;padding:2px 5px;border-radius:3px;}
+.tb-stat.green{background:rgba(52,211,153,.12);color:var(--emerald);}
+.tb-stat.amber{background:rgba(251,191,36,.1);color:var(--amber);}
+.tb-stat.rose{background:rgba(244,63,94,.1);color:var(--rose);}
+.tb-stat.cyan{background:rgba(34,211,238,.1);color:var(--cyan);}
+.tb-stat.gray{background:rgba(255,255,255,.06);color:var(--t2);}
+
+.sb-divider{height:1px;background:var(--border);margin:2px 0;flex-shrink:0;}
+
+.sb-legend{padding:8px 4px;display:flex;flex-direction:column;gap:5px;margin-top:auto;flex-shrink:0;}
+.legend-row{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--t2);}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+
+/* MAIN */
+.main{
+  display:grid;grid-template-rows:100px 1fr;
+  overflow:hidden;padding:14px 16px 14px 14px;gap:12px;background:var(--bg);
+}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;height:100%;}
+.kpi{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;overflow:hidden;transition:border-color .2s;
+}
+.kpi:hover{border-color:var(--border2);}
+.kpi-accent{position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);}
+.kpi-value{font-size:28px;font-weight:800;font-family:var(--mono);line-height:1;color:var(--t1);transition:all .2s;}
+.kpi-bottom{display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.kpi-desc{font-size:9px;color:var(--t3);}
+.kpi-delta{font-size:9px;font-family:var(--mono);font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;}
+.kpi-delta.pos{background:rgba(52,211,153,.1);color:var(--emerald);}
+.kpi-delta.neg{background:rgba(244,63,94,.1);color:var(--rose);}
+.kpi-delta.neu{background:rgba(251,191,36,.08);color:var(--amber);}
+
+/* Charts area */
+.charts-area{display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow:hidden;height:100%;min-height:0;}
+.chart-col{display:flex;flex-direction:column;gap:12px;overflow:hidden;min-height:0;}
+
+.panel{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 16px;display:flex;flex-direction:column;overflow:hidden;min-height:0;flex:1;
+}
+.panel-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;flex-shrink:0;}
+.panel-title{font-size:11px;font-weight:700;color:var(--t1);}
+.panel-sub{font-size:9px;color:var(--t3);margin-top:2px;}
+.panel-tag{font-size:9px;font-family:var(--mono);font-weight:500;padding:3px 7px;border-radius:3px;background:var(--s3);color:var(--t2);border:1px solid var(--border);flex-shrink:0;}
+.chart-wrap{flex:1;min-height:0;position:relative;}
+
+/* Band bars */
+.band-bars{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center;}
+.band-row{display:flex;align-items:center;gap:9px;}
+.band-label{font-size:9px;font-weight:600;color:var(--t2);width:72px;flex-shrink:0;text-align:right;font-family:var(--mono);}
+.band-track{flex:1;height:24px;background:var(--s2);border-radius:3px;overflow:visible;position:relative;display:flex;align-items:center;}
+.band-fill{
+  height:100%;border-radius:3px;display:flex;align-items:center;padding-left:8px;
+  transition:width .55s cubic-bezier(.4,0,.2,1);min-width:0;flex-shrink:0;
+}
+.band-fill-label{font-size:9px;font-weight:700;font-family:var(--mono);color:rgba(255,255,255,.9);white-space:nowrap;}
+.band-fill-label-out{font-size:9px;font-weight:700;font-family:var(--mono);white-space:nowrap;margin-left:6px;}
+.band-count{font-size:10px;font-family:var(--mono);font-weight:700;color:var(--t2);width:26px;text-align:right;flex-shrink:0;}
+
+/* Gauge */
+.gauge-wrap{display:flex;align-items:center;justify-content:center;gap:22px;flex:1;}
+.gauge-ring-area{position:relative;width:100px;height:100px;flex-shrink:0;}
+.gauge-ring-area canvas{position:absolute;top:0;left:0;}
+.gauge-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.gauge-pct{font-size:20px;font-weight:800;font-family:var(--mono);line-height:1;transition:color .3s;}
+.gauge-sub{font-size:8px;color:var(--t3);margin-top:2px;text-align:center;}
+.gauge-stats{display:flex;flex-direction:column;gap:7px;}
+.gs-row{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.gs-label{font-size:10px;}
+.gs-value{font-size:11px;font-weight:700;font-family:var(--mono);}
+
+/* BAND COMPARISON VIEW */
+.compare-view{
+  display:none;flex-direction:column;
+  padding:18px 24px;gap:14px;overflow:hidden;
+  height:calc(100vh - 120px);background:var(--bg);
+}
+.compare-view.visible{display:flex;}
+.cmp-header{flex-shrink:0;}
+.cmp-title{font-size:15px;font-weight:700;color:var(--t1);}
+.cmp-sub{font-size:11px;color:var(--t3);margin-top:3px;}
+
+.cmp-four-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  flex:1;min-height:0;
+}
+.cmp-mini-panel{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 16px 10px;
+  display:flex;flex-direction:column;overflow:hidden;min-height:0;
+}
+.cmp-mini-header{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:12px;flex-shrink:0;
+}
+.cmp-mini-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.cmp-mini-name{font-size:12px;font-weight:700;color:var(--t1);}
+.cmp-mini-range{
+  font-size:9px;font-family:var(--mono);color:var(--t3);
+  padding:2px 6px;background:var(--s3);border-radius:3px;border:1px solid var(--border);
+  margin-left:auto;
+}
+.cmp-mini-wrap{flex:1;min-height:0;position:relative;}
+
+/* Table */
+.comp-table{width:100%;border-collapse:collapse;font-size:10px;}
+.comp-table thead tr{border-bottom:1px solid var(--border);}
+.comp-table th{padding:5px 8px;text-align:left;font-size:8px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--t3);}
+.comp-table th:not(:first-child){text-align:right;}
+.comp-table tbody tr{border-bottom:1px solid rgba(30,45,69,.5);transition:background .1s;cursor:pointer;}
+.comp-table tbody tr:hover{background:var(--s2);}
+.comp-table tbody tr.row-active{background:rgba(34,211,238,.06);}
+.comp-table td{padding:7px 8px;color:var(--t1);}
+.comp-table td:not(:first-child){text-align:right;font-family:var(--mono);font-size:10px;}
+.t-name-cell{display:flex;align-items:center;gap:7px;font-weight:600;font-size:11px;}
+.t-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.mini-bar-wrap{display:flex;align-items:center;gap:5px;justify-content:flex-end;}
+.mini-bar-track{width:50px;height:5px;background:var(--s3);border-radius:3px;overflow:hidden;}
+.mini-bar-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.rate-pill{font-size:9px;font-family:var(--mono);font-weight:700;padding:2px 5px;border-radius:3px;}
+.rate-good{background:rgba(52,211,153,.12);color:var(--emerald);}
+.rate-mid{background:rgba(251,191,36,.1);color:var(--amber);}
+.rate-bad{background:rgba(244,63,94,.1);color:var(--rose);}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.kpi{animation:fadeIn .35s ease both;}
+.kpi:nth-child(1){animation-delay:.04s}.kpi:nth-child(2){animation-delay:.08s}
+.kpi:nth-child(3){animation-delay:.12s}.kpi:nth-child(4){animation-delay:.16s}
+.panel{animation:fadeIn .4s ease both;}
+/* CONTENT SWITCHER */
+.content-switcher{
+  display:flex;align-items:center;gap:4px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:6px;padding:3px;
+}
+.cs-btn{
+  padding:4px 12px;border-radius:4px;border:none;
+  font-family:var(--font);font-size:11px;font-weight:600;
+  color:var(--t3);background:transparent;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.cs-btn:hover{color:var(--t2);}
+.cs-btn.active{background:var(--cyan);color:#000;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo">
+        <img src="ckhs-logo.png" alt="CKHS" id="school-logo"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+          style="width:100%;height:100%;object-fit:contain;border-radius:6px;"/>
+        <span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;letter-spacing:-.5px;">CK</span>
+      </div>
+      <div>
+        <div class="tb-school">Cross Keys High School</div>
+        <div class="tb-sub">CKHS · Georgia Milestones EOC</div>
+      </div>
+      <div class="tb-divider"></div>
+      <div class="content-switcher">
+        <button class="cs-btn active" id="cs-biology" onclick="switchContent('biology')">Biology</button>
+        <button class="cs-btn" id="cs-ushistory" onclick="switchContent('ushistory')">US History</button>
+        <button class="cs-btn" id="cs-algebra" onclick="switchContent('algebra')">Algebra</button>
+      </div>
+      <span class="badge badge-cyan" id="active-content-badge">Biology</span>
+      <span class="badge badge-amber">Winter Administration</span>
+    </div>
+    <span class="tb-date" id="topdate"></span>
+  </header>
+
+  <!-- TAB STRIP -->
+  <nav class="tabstrip">
+    <button class="tab-btn active" id="tab-dashboard" onclick="switchTab('dashboard')">
+      <span class="tab-icon">📊</span> Dashboard
+    </button>
+    <button class="tab-btn" id="tab-compare" onclick="switchTab('compare')">
+      <span class="tab-icon">⚡</span> Band Comparison
+    </button>
+    <button class="tab-btn" id="tab-targets" onclick="switchTab('targets')">
+      <span class="tab-icon">🎯</span> Achievement Targets
+    </button>
+  </nav>
+
+  <!-- TARGETS VIEW -->
+  <div class="targets-view" id="targets-view">
+    <div class="tgt-header">
+      <div class="tgt-title" id="tgt-title">Biology · CCRPI Achievement Targets — Science Indicator</div>
+      <div class="tgt-sub">Georgia Milestones · Achievement Score 2025 vs 3% Growth Target → Projected 2026</div>
+    </div>
+    <div class="tgt-summary">
+      <div class="tgt-sum-card all">
+        <div class="tgt-sum-label">All Students · 2025 Score</div>
+        <div class="tgt-sum-val cyan" id="tgt-all-score">54.04</div>
+        <div class="tgt-sum-desc">Current achievement score</div>
+      </div>
+      <div class="tgt-sum-card gap">
+        <div class="tgt-sum-label">3% Growth Target</div>
+        <div class="tgt-sum-val amber" id="tgt-all-growth">+1.45</div>
+        <div class="tgt-sum-desc">Points needed to meet growth target</div>
+      </div>
+      <div class="tgt-sum-card proj">
+        <div class="tgt-sum-label">Projected 2026 Target</div>
+        <div class="tgt-sum-val emerald" id="tgt-all-proj">55.49</div>
+        <div class="tgt-sum-desc">Target score for next administration</div>
+      </div>
+    </div>
+    <div class="tgt-grid" id="tgt-grid"></div>
+  </div>
+
+  <!-- COMPARE VIEW -->
+  <div class="compare-view" id="compare-view">
+    <div class="cmp-header">
+      <div>
+        <div class="cmp-title">Performance Band Comparison — All Teachers</div>
+        <div class="cmp-sub" id="cmp-sub">Biology GMAS Winter · % of each teacher's class per band · sorted ascending within each level</div>
+      </div>
+    </div>
+    <div class="cmp-four-grid">
+      <div class="cmp-mini-panel">
+        <div class="cmp-mini-header"><span class="cmp-mini-dot" style="background:var(--beg)"></span><span class="cmp-mini-name">Beginning</span><span class="cmp-mini-range">0–67</span></div>
+        <div class="cmp-mini-wrap"><canvas id="cmpBeg"></canvas></div>
+      </div>
+      <div class="cmp-mini-panel">
+        <div class="cmp-mini-header"><span class="cmp-mini-dot" style="background:var(--dev)"></span><span class="cmp-mini-name">Developing</span><span class="cmp-mini-range">68–79</span></div>
+        <div class="cmp-mini-wrap"><canvas id="cmpDev"></canvas></div>
+      </div>
+      <div class="cmp-mini-panel">
+        <div class="cmp-mini-header"><span class="cmp-mini-dot" style="background:var(--pro)"></span><span class="cmp-mini-name">Proficient</span><span class="cmp-mini-range">80–91</span></div>
+        <div class="cmp-mini-wrap"><canvas id="cmpPro"></canvas></div>
+      </div>
+      <div class="cmp-mini-panel">
+        <div class="cmp-mini-header"><span class="cmp-mini-dot" style="background:var(--dis)"></span><span class="cmp-mini-name">Distinguished</span><span class="cmp-mini-range">92–100</span></div>
+        <div class="cmp-mini-wrap"><canvas id="cmpDis"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body" id="dashboard-body">
+    <aside class="sidebar">
+      <div class="sb-label">View</div>
+      <button class="cohort-btn active" id="btn-cohort" onclick="select('cohort')">
+        <div class="cb-label">▣ Full Cohort</div>
+        <div class="cb-sub">202 students · 5 teachers</div>
+      </button>
+      <div class="sb-divider"></div>
+      <div class="sb-label">By Teacher</div>
+      <div id="teacher-btns"></div>
+      <div class="sb-legend">
+        <div class="sb-label" style="margin-bottom:4px">Performance Levels</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--dis)"></div>Distinguished (92–100)</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--pro)"></div>Proficient (80–91)</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--dev)"></div>Developing (68–79)</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--beg)"></div>Beginning (0–67)</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--cyan)"></div>
+          <div class="kpi-label">Total Students</div>
+          <div class="kpi-value" style="color:var(--cyan)" id="kpi-total">202</div>
+          <div class="kpi-bottom"><span class="kpi-desc" id="kpi-total-desc">Full cohort</span></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--emerald)"></div>
+          <div class="kpi-label">Proficiency Rate</div>
+          <div class="kpi-value" style="color:var(--emerald)" id="kpi-profrate">40.6%</div>
+          <div class="kpi-bottom">
+            <span class="kpi-desc">Prof + Distinguished</span>
+            <span class="kpi-delta neg" id="kpi-profrate-d">−29.4% below target</span>
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--amber)"></div>
+          <div class="kpi-label">CCRPI Performance</div>
+          <div class="kpi-value" style="color:var(--amber)" id="kpi-ccrpi">56%</div>
+          <div class="kpi-bottom">
+            <span class="kpi-desc" id="kpi-ccrpi-pts">5.64 pts</span>
+            <span class="kpi-delta neu" id="kpi-ccrpi-d">indicator</span>
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--rose)"></div>
+          <div class="kpi-label">Gap to 70% Target</div>
+          <div class="kpi-value" style="color:var(--rose)" id="kpi-gap">−29.4%</div>
+          <div class="kpi-bottom">
+            <span class="kpi-desc">Benchmark: Prof + Dist</span>
+            <span class="kpi-delta neg" id="kpi-gap-d">needs support</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-area">
+        <div class="chart-col">
+          <div class="panel" style="flex:1.3">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title" id="band-title">Performance Band Distribution</div>
+                <div class="panel-sub" id="band-sub">202 students · Biology GMAS Winter</div>
+              </div>
+              <span class="panel-tag" id="band-tag">COHORT</span>
+            </div>
+            <div class="band-bars" id="band-bars"></div>
+          </div>
+          <div class="panel" style="flex:.7">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Proficiency Breakdown</div>
+                <div class="panel-sub">Prof + Distinguished vs Below</div>
+              </div>
+            </div>
+            <div class="gauge-wrap">
+              <div class="gauge-ring-area">
+                <canvas id="gaugeChart" width="100" height="100"></canvas>
+                <div class="gauge-center">
+                  <div class="gauge-pct" id="gauge-pct" style="color:var(--amber)">40.6%</div>
+                  <div class="gauge-sub">proficient</div>
+                </div>
+              </div>
+              <div class="gauge-stats" id="gauge-stats"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-col">
+          <div class="panel" style="flex:1">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">CCRPI Performance Indicator by Teacher</div>
+                <div class="panel-sub">Winter Admin · dashed line = 70% target</div>
+              </div>
+              <span class="panel-tag">COMPARISON</span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="teacherChart"></canvas>
+            </div>
+          </div>
+          <div class="panel" style="flex:1">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Teacher Detail</div>
+                <div class="panel-sub">Click a row to filter · proficiency &amp; CCRPI</div>
+              </div>
+            </div>
+            <div style="overflow:auto;flex:1;min-height:0;">
+              <table class="comp-table">
+                <thead>
+                  <tr>
+                    <th>Teacher</th><th>n</th><th>Proficiency Rate</th><th>CCRPI %</th><th>Pts</th>
+                  </tr>
+                </thead>
+                <tbody id="comp-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer style="
+  position:fixed;bottom:0;left:0;right:0;
+  height:28px;
+  background:var(--s1);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  font-size:10px;
+  color:var(--t3);
+  font-family:var(--mono);
+  z-index:200;
+">
+  <span>Cross Keys High School · GMAS Performance Dashboard · Winter Administration 2025</span>
+  <span>© <span id="footer-year"></span> <strong style="color:var(--t2)">Derikson Rivera-Rios</strong> · MIT License</span>
+</footer>
+
+<script>
+
+
+function buildGauge(){
+  const ctx = document.getElementById('gaugeChart').getContext('2d');
+  const pr = profRate(TEACHERS.cohort);
+  gaugeChart = new Chart(ctx,{
+    type:'doughnut',
+    data:{datasets:[{
+      data:[pr,100-pr],
+      backgroundColor:['#fbbf24','rgba(255,255,255,.06)'],
+      borderWidth:0, circumference:280, rotation:-140
+    }]},
+    options:{cutout:'78%',plugins:{legend:{display:false},tooltip:{enabled:false}},animation:{duration:700}}
+  });
+}
+
+function buildTeacherChart(){
+  const ctx = document.getElementById('teacherChart').getContext('2d');
+  teacherChart = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels: ORDER.map(k=>TEACHERS[k].name),
+      datasets:[
+        {
+          label:'CCRPI %',
+          data: ORDER.map(k=>TEACHERS[k].ccrpiPct),
+          backgroundColor: ORDER.map(k=>TEACHERS[k].color+'cc'),
+          borderRadius:4, borderSkipped:false
+        },
+        {
+          label:'Target 70%',
+          data:[70,70,70,70,70],
+          type:'line',
+          borderColor:'rgba(251,191,36,.55)',
+          borderDash:[5,3], borderWidth:1.5,
+          pointRadius:0, fill:false
+        }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#131c30',borderColor:'#1e2d45',borderWidth:1,
+          titleColor:'#f0f6ff',bodyColor:'#8ba4c0',
+          titleFont:{family:"'Outfit',sans-serif",size:11,weight:'700'},
+          bodyFont:{family:"'JetBrains Mono',monospace",size:10},
+          callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y}%`}
+        }
+      },
+      scales:{
+        y:{
+          min:0,max:100,
+          grid:{color:'rgba(255,255,255,.04)'},
+          ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#4a6278',callback:v=>v+'%'},
+          border:{color:'transparent'}
+        },
+        x:{
+          grid:{display:false},
+          ticks:{font:{family:"'Outfit',sans-serif",size:10},color:'#8ba4c0'},
+          border:{color:'transparent'}
+        }
+      }
+    }
+  });
+}
+
+function select(key){
+  // buttons
+  document.getElementById('btn-cohort').classList.toggle('active',key==='cohort');
+  ORDER.forEach(k=>{ const el=document.getElementById('btn-'+k); if(el) el.classList.toggle('active',k===key); });
+
+  const d = TEACHERS[key];
+  const pr = profRate(d);
+  const gap = pr - 70;
+  const gapColor = gap>=0?'var(--emerald)':gap>-20?'var(--amber)':'var(--rose)';
+
+  // KPIs
+  animKpi('kpi-total', d.n);
+  document.getElementById('kpi-total-desc').textContent = key==='cohort'?'Full cohort · 5 teachers':`${d.name}'s class`;
+  animKpi('kpi-profrate', pr.toFixed(1)+'%');
+  const gapLbl = gap>=0?`+${gap.toFixed(1)}% above target`:`${gap.toFixed(1)}% below target`;
+  document.getElementById('kpi-profrate-d').textContent = gapLbl;
+  document.getElementById('kpi-profrate-d').className = 'kpi-delta '+(gap>=0?'pos':'neg');
+  animKpi('kpi-ccrpi', d.ccrpiPct+'%');
+  document.getElementById('kpi-ccrpi-pts').textContent = d.ccrpiPts+' pts';
+  animKpi('kpi-gap', (gap>=0?'+':'')+gap.toFixed(1)+'%');
+  document.getElementById('kpi-gap-d').textContent = gap>=0?'at/above target':'below target';
+  document.getElementById('kpi-gap-d').className = 'kpi-delta '+(gap>=0?'pos':'neg');
+
+  // Band bars
+  renderBands(d);
+
+  // Gauge
+  gaugeChart.data.datasets[0].data = [pr,100-pr];
+  gaugeChart.data.datasets[0].backgroundColor = [
+    gap>=0?'#34d399':gap>-20?'#fbbf24':'#f43f5e',
+    'rgba(255,255,255,.06)'
+  ];
+  gaugeChart.update();
+  const gEl = document.getElementById('gauge-pct');
+  gEl.textContent = pr.toFixed(1)+'%';
+  gEl.style.color = gap>=0?'var(--emerald)':gap>-20?'var(--amber)':'var(--rose)';
+  renderGaugeStats(d);
+
+  // Teacher chart highlight
+  teacherChart.data.datasets[0].backgroundColor = ORDER.map(k=>
+    key==='cohort'?TEACHERS[k].color+'cc': k===key?TEACHERS[k].color:TEACHERS[k].color+'33'
+  );
+  teacherChart.update();
+
+  // Table
+  renderTable(key);
+
+  // Panel labels
+  document.getElementById('band-title').textContent = key==='cohort'?'Performance Band Distribution':`${d.name} · Band Distribution`;
+  document.getElementById('band-sub').textContent = `${d.n} students · Biology GMAS Winter`;
+  document.getElementById('band-tag').textContent = key==='cohort'?'COHORT':'TEACHER';
+}
+
+function animKpi(id,val){
+  const el=document.getElementById(id);
+  el.style.opacity='.3'; el.style.transform='translateY(5px)';
+  setTimeout(()=>{
+    el.textContent=val;
+    el.style.transition='opacity .2s,transform .2s';
+    el.style.opacity='1'; el.style.transform='none';
+  },70);
+}
+
+function renderBands(d){
+  const bands=[
+    {label:'92–100',name:'Distinguished',count:d.dis,color:'var(--dis)'},
+    {label:'80–91', name:'Proficient',   count:d.pro,color:'var(--pro)'},
+    {label:'68–79', name:'Developing',   count:d.dev,color:'var(--dev)'},
+    {label:'0–67',  name:'Beginning',    count:d.beg,color:'var(--beg)'},
+  ];
+  document.getElementById('band-bars').innerHTML = bands.map(b=>{
+    const pct = b.count/d.n*100;
+    const isNarrow = pct < 18;
+    return `<div class="band-row">
+      <div class="band-label">${b.label}</div>
+      <div class="band-track">
+        <div class="band-fill" style="width:${pct}%;background:${b.color};${isNarrow?'overflow:visible;':''}">
+          ${isNarrow ? '' : `<span class="band-fill-label">${b.name} &nbsp;${pct.toFixed(0)}%</span>`}
+        </div>
+        ${isNarrow ? `<span class="band-fill-label-out" style="color:${b.color}">${b.name} &nbsp;${pct.toFixed(0)}%</span>` : ''}
+      </div>
+      <div class="band-count">${b.count}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderGaugeStats(d){
+  document.getElementById('gauge-stats').innerHTML = `
+    <div class="gs-row"><span class="gs-label" style="color:var(--dis)">Distinguished</span><span class="gs-value" style="color:var(--dis)">${d.dis} <small style="opacity:.55;font-size:8px">(${(d.dis/d.n*100).toFixed(0)}%)</small></span></div>
+    <div class="gs-row"><span class="gs-label" style="color:var(--pro)">Proficient</span><span class="gs-value" style="color:var(--pro)">${d.pro} <small style="opacity:.55;font-size:8px">(${(d.pro/d.n*100).toFixed(0)}%)</small></span></div>
+    <div class="gs-row"><span class="gs-label" style="color:var(--dev)">Developing</span><span class="gs-value" style="color:var(--dev)">${d.dev} <small style="opacity:.55;font-size:8px">(${(d.dev/d.n*100).toFixed(0)}%)</small></span></div>
+    <div class="gs-row"><span class="gs-label" style="color:var(--beg)">Beginning</span><span class="gs-value" style="color:var(--beg)">${d.beg} <small style="opacity:.55;font-size:8px">(${(d.beg/d.n*100).toFixed(0)}%)</small></span></div>
+  `;
+}
+
+function renderTable(activeKey){
+  document.getElementById('comp-tbody').innerHTML = ORDER.map(k=>{
+    const d=TEACHERS[k]; const pr=profRate(d);
+    const pc=pr>=50?'rate-good':pr>=35?'rate-mid':'rate-bad';
+    const cc=d.ccrpiPct>=60?'rate-good':d.ccrpiPct>=50?'rate-mid':'rate-bad';
+    return `<tr class="${k===activeKey?'row-active':''}" onclick="select('${k}')">
+      <td><span class="t-name-cell"><span class="t-dot" style="background:${d.color}"></span>${d.name}</span></td>
+      <td style="color:var(--t2);font-family:var(--mono)">${d.n}</td>
+      <td>
+        <div class="mini-bar-wrap">
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${pr}%;background:${d.color}"></div></div>
+          <span class="rate-pill ${pc}">${pr.toFixed(1)}%</span>
+        </div>
+      </td>
+      <td><span class="rate-pill ${cc}">${d.ccrpiPct}%</span></td>
+      <td style="color:var(--t2)">${d.ccrpiPts}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── ALL CONTENT DATA ────────────────────────────────────
+const CONTENT = {
+  biology: {
+    label: 'Biology',
+    indicator: 'Science Indicator',
+    teachers: {
+      cohort:  { name:'All Teachers', n:202, beg:68, dev:52, pro:70,  dis:12, ccrpiPct:56, ccrpiPts:5.64, color:'#22d3ee' },
+      jenkins: { name:'Jenkins',      n:17,  beg:7,  dev:6,  pro:4,   dis:0,  ccrpiPct:41, ccrpiPts:4.12, color:'#a78bfa' },
+      koehnke: { name:'Koehnke',      n:68,  beg:23, dev:12, pro:32,  dis:1,  ccrpiPct:58, ccrpiPts:5.81, color:'#34d399' },
+      nieves:  { name:'Nieves',       n:44,  beg:16, dev:12, pro:10,  dis:6,  ccrpiPct:57, ccrpiPts:5.68, color:'#fb923c' },
+      robbins: { name:'Robbins',      n:27,  beg:10, dev:11, pro:6,   dis:0,  ccrpiPct:43, ccrpiPts:4.26, color:'#f43f5e' },
+      tonn:    { name:'Tonn',         n:43,  beg:10, dev:11, pro:17,  dis:5,  ccrpiPct:70, ccrpiPts:6.98, color:'#fbbf24' },
+    },
+    order: ['jenkins','koehnke','nieves','robbins','tonn'],
+    targets: {
+      allScore:54.04, allGrowth:1.45, allProj:55.49,
+      subgroups:[
+        { group:'All Students',              score2025:54.04, growth:1.45, target2026:55.49, sufficient:true  },
+        { group:'Black',                     score2025:33.34, growth:1.10, target2026:34.44, sufficient:true  },
+        { group:'Economically Disadvantaged',score2025:54.04, growth:1.35, target2026:55.39, sufficient:true  },
+        { group:'English Learners',          score2025:46.55, growth:1.95, target2026:48.50, sufficient:true  },
+        { group:'Hispanic',                  score2025:53.84, growth:1.53, target2026:55.37, sufficient:true  },
+        { group:'Students With Disability',  score2025:17.08, growth:1.97, target2026:19.05, sufficient:true  },
+        { group:'Asian/Pacific Islander',    score2025:null,  growth:0.43, target2026:null,  sufficient:false, note:'Too Few Students' },
+        { group:'American Indian/Alaskan',   score2025:null,  growth:null, target2026:null,  sufficient:false, note:'Too Few Students' },
+        { group:'Multi-Racial',              score2025:null,  growth:null, target2026:null,  sufficient:false, note:'No Data'           },
+        { group:'White',                     score2025:null,  growth:null, target2026:null,  sufficient:false, note:'Too Few Students' },
+      ]
+    }
+  },
+  ushistory: {
+    label: 'US History',
+    indicator: 'Social Studies Indicator',
+    teachers: {
+      cohort:         { name:'All Teachers',   n:142, beg:42, dev:46, pro:41, dis:13, ccrpiPct:59, ccrpiPts:5.88, color:'#22d3ee' },
+      bogan:          { name:'Bogan',          n:44,  beg:15, dev:11, pro:13, dis:5,  ccrpiPct:59, ccrpiPts:5.91, color:'#a78bfa' },
+      elswick:        { name:'Elswick',        n:34,  beg:7,  dev:14, pro:10, dis:3,  ccrpiPct:63, ccrpiPts:6.32, color:'#34d399' },
+      holcomb:        { name:'Holcomb',        n:18,  beg:6,  dev:11, pro:1,  dis:0,  ccrpiPct:36, ccrpiPts:3.61, color:'#f43f5e' },
+      owenrobinson:   { name:'Owen-Robinson',  n:41,  beg:10, dev:10, pro:17, dis:4,  ccrpiPct:68, ccrpiPts:6.83, color:'#fbbf24' },
+    },
+    order: ['bogan','elswick','holcomb','owenrobinson'],
+    targets: {
+      allScore:61.96, allGrowth:1.39, allProj:63.35,
+      subgroups:[
+        { group:'All Students',              score2025:61.96, growth:1.39, target2026:63.35, sufficient:true  },
+        { group:'Black',                     score2025:55.00, growth:1.20, target2026:56.20, sufficient:true  },
+        { group:'Economically Disadvantaged',score2025:61.96, growth:1.23, target2026:63.19, sufficient:true  },
+        { group:'English Learners',          score2025:51.01, growth:2.04, target2026:53.05, sufficient:true  },
+        { group:'Hispanic',                  score2025:61.39, growth:1.45, target2026:62.84, sufficient:true  },
+        { group:'Students With Disability',  score2025:24.06, growth:1.88, target2026:25.94, sufficient:true  },
+        { group:'Asian/Pacific Islander',    score2025:null,  growth:0.71, target2026:null,  sufficient:false, note:'Too Few Students' },
+        { group:'American Indian/Alaskan',   score2025:null,  growth:null, target2026:null,  sufficient:false, note:'Too Few Students' },
+        { group:'Multi-Racial',              score2025:null,  growth:null, target2026:null,  sufficient:false, note:'Too Few Students' },
+        { group:'White',                     score2025:null,  growth:null, target2026:null,  sufficient:false, note:'Too Few Students' },
+      ]
+    }
+  },
+  algebra: {
+    label: 'Algebra',
+    indicator: 'Math Indicator',
+    teachers: {
+      cohort: { name:'All Teachers', n:0, beg:0, dev:0, pro:0, dis:0, ccrpiPct:0, ccrpiPts:0, color:'#22d3ee' },
+    },
+    order: [],
+    targets: { allScore:0, allGrowth:0, allProj:0, subgroups:[] }
+  }
+};
+
+// ── STATE ────────────────────────────────────────────────
+let activeContent = 'biology';
+let TEACHERS = CONTENT.biology.teachers;
+let ORDER    = CONTENT.biology.order;
+
+const TEACHER_COLORS = {
+  // Biology
+  jenkins:'#a78bfa', koehnke:'#34d399', nieves:'#fb923c', robbins:'#f43f5e', tonn:'#fbbf24',
+  // US History
+  bogan:'#a78bfa', elswick:'#34d399', holcomb:'#f43f5e', owenrobinson:'#fbbf24',
+};
+
+// ── CONTENT SWITCHING ────────────────────────────────────
+function switchContent(key){
+  if(key === 'algebra'){
+    alert('Algebra data coming soon — paste the data to unlock this section.');
+    return;
+  }
+  activeContent = key;
+  const c = CONTENT[key];
+  TEACHERS = c.teachers;
+  ORDER    = c.order;
+
+  // Update switcher buttons
+  ['biology','ushistory','algebra'].forEach(k=>{
+    document.getElementById('cs-'+k).classList.toggle('active', k===key);
+  });
+
+  // Update badge
+  document.getElementById('active-content-badge').textContent = c.label;
+
+  // Update compare subtitle
+  document.getElementById('cmp-sub').textContent =
+    `${c.label} GMAS Winter · % of each teacher's class per band · sorted ascending within each level`;
+
+  // Update targets header
+  document.getElementById('tgt-title').textContent =
+    `${c.label} · CCRPI Achievement Targets — ${c.indicator}`;
+  document.getElementById('tgt-all-score').textContent  = c.targets.allScore;
+  document.getElementById('tgt-all-growth').textContent = '+' + c.targets.allGrowth;
+  document.getElementById('tgt-all-proj').textContent   = c.targets.allProj;
+
+  // Rebuild sidebar
+  rebuildSidebar();
+
+  // Rebuild charts
+  rebuildCharts();
+
+  // Refresh targets grid
+  buildTargetsGrid(c.targets.subgroups);
+
+  // Rebuild compare charts
+  rebuildCompare();
+
+  // Reset to cohort view
+  select('cohort');
+}
+
+function rebuildSidebar(){
+  const c = CONTENT[activeContent];
+  const cohort = TEACHERS.cohort;
+
+  // Cohort button
+  document.getElementById('btn-cohort').querySelector('.cb-sub').textContent =
+    `${cohort.n} students · ${ORDER.length} teachers`;
+
+  // Teacher buttons area
+  document.getElementById('teacher-btns').innerHTML = ORDER.map(k => {
+    const d = TEACHERS[k];
+    const pr = profRate(d);
+    const prClass = pr>=50?'green':pr>=35?'amber':'rose';
+    const ccClass = d.ccrpiPct>=60?'cyan':d.ccrpiPct>=50?'amber':'rose';
+    return `<button class="teacher-btn" id="btn-${k}" onclick="select('${k}')">
+      <div class="tb-name">${d.name}</div>
+      <div class="tb-stats">
+        <span class="tb-stat gray">n=${d.n}</span>
+        <span class="tb-stat ${prClass}">${pr.toFixed(0)}% prof</span>
+        <span class="tb-stat ${ccClass}">${d.ccrpiPct}% CCRPI</span>
+      </div>
+    </button>`;
+  }).join('');
+}
+
+function rebuildCharts(){
+  // Destroy & rebuild teacher CCRPI bar chart
+  if(teacherChart){ teacherChart.destroy(); teacherChart = null; }
+  buildTeacherChart();
+  // Destroy & rebuild gauge
+  if(gaugeChart){ gaugeChart.destroy(); gaugeChart = null; }
+  buildGauge();
+}
+
+function rebuildCompare(){
+  // Destroy existing compare charts
+  ['cmpBeg','cmpDev','cmpPro','cmpDis'].forEach(id => {
+    const canvas = document.getElementById(id);
+    const existing = Chart.getChart(canvas);
+    if(existing) existing.destroy();
+  });
+  buildCompare();
+}
+
+function profRate(d){ return (d.pro + d.dis) / d.n * 100; }
+
+let gaugeChart, teacherChart;
+
+document.getElementById('topdate').textContent =
+  new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+function buildGauge(){
+  const ctx = document.getElementById('gaugeChart').getContext('2d');
+  const pr = profRate(TEACHERS.cohort);
+  gaugeChart = new Chart(ctx,{
+    type:'doughnut',
+    data:{datasets:[{
+      data:[pr,100-pr],
+      backgroundColor:['#fbbf24','rgba(255,255,255,.06)'],
+      borderWidth:0, circumference:280, rotation:-140
+    }]},
+    options:{cutout:'78%',plugins:{legend:{display:false},tooltip:{enabled:false}},animation:{duration:700}}
+  });
+}
+
+function buildTeacherChart(){
+  const ctx = document.getElementById('teacherChart').getContext('2d');
+  teacherChart = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels: ORDER.map(k=>TEACHERS[k].name),
+      datasets:[
+        {
+          label:'CCRPI %',
+          data: ORDER.map(k=>TEACHERS[k].ccrpiPct),
+          backgroundColor: ORDER.map(k=>TEACHERS[k].color+'cc'),
+          borderRadius:4, borderSkipped:false
+        },
+        {
+          label:'Target 70%',
+          data: ORDER.map(()=>70),
+          type:'line',
+          borderColor:'rgba(251,191,36,.55)',
+          borderDash:[5,3], borderWidth:1.5,
+          pointRadius:0, fill:false
+        }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#131c30',borderColor:'#1e2d45',borderWidth:1,
+          titleColor:'#f0f6ff',bodyColor:'#8ba4c0',
+          titleFont:{family:"'Outfit',sans-serif",size:11,weight:'700'},
+          bodyFont:{family:"'JetBrains Mono',monospace",size:10},
+          callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y}%`}
+        }
+      },
+      scales:{
+        y:{min:0,max:100,grid:{color:'rgba(255,255,255,.04)'},
+          ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#4a6278',callback:v=>v+'%'},
+          border:{color:'transparent'}},
+        x:{grid:{display:false},
+          ticks:{font:{family:"'Outfit',sans-serif",size:10},color:'#8ba4c0'},
+          border:{color:'transparent'}}
+      }
+    }
+  });
+}
+
+function select(key){
+  document.getElementById('btn-cohort').classList.toggle('active',key==='cohort');
+  ORDER.forEach(k=>{ const el=document.getElementById('btn-'+k); if(el) el.classList.toggle('active',k===key); });
+
+  const d = TEACHERS[key];
+  const pr = profRate(d);
+  const gap = pr - 70;
+
+  animKpi('kpi-total', d.n);
+  document.getElementById('kpi-total-desc').textContent = key==='cohort'?`Full cohort · ${ORDER.length} teachers`:`${d.name}'s class`;
+  animKpi('kpi-profrate', pr.toFixed(1)+'%');
+  document.getElementById('kpi-profrate-d').textContent = gap>=0?`+${gap.toFixed(1)}% above target`:`${gap.toFixed(1)}% below target`;
+  document.getElementById('kpi-profrate-d').className = 'kpi-delta '+(gap>=0?'pos':'neg');
+  animKpi('kpi-ccrpi', d.ccrpiPct+'%');
+  document.getElementById('kpi-ccrpi-pts').textContent = d.ccrpiPts+' pts';
+  animKpi('kpi-gap', (gap>=0?'+':'')+gap.toFixed(1)+'%');
+  document.getElementById('kpi-gap-d').textContent = gap>=0?'at/above target':'below target';
+  document.getElementById('kpi-gap-d').className = 'kpi-delta '+(gap>=0?'pos':'neg');
+
+  renderBands(d);
+
+  gaugeChart.data.datasets[0].data = [pr,100-pr];
+  gaugeChart.data.datasets[0].backgroundColor = [
+    gap>=0?'#34d399':gap>-20?'#fbbf24':'#f43f5e','rgba(255,255,255,.06)'
+  ];
+  gaugeChart.update();
+  const gEl = document.getElementById('gauge-pct');
+  gEl.textContent = pr.toFixed(1)+'%';
+  gEl.style.color = gap>=0?'var(--emerald)':gap>-20?'var(--amber)':'var(--rose)';
+  renderGaugeStats(d);
+
+  teacherChart.data.datasets[0].backgroundColor = ORDER.map(k=>
+    key==='cohort'?TEACHERS[k].color+'cc': k===key?TEACHERS[k].color:TEACHERS[k].color+'33'
+  );
+  teacherChart.update();
+
+  renderTable(key);
+
+  const c = CONTENT[activeContent];
+  document.getElementById('band-title').textContent = key==='cohort'?'Performance Band Distribution':`${d.name} · Band Distribution`;
+  document.getElementById('band-sub').textContent = `${d.n} students · ${c.label} GMAS Winter`;
+  document.getElementById('band-tag').textContent = key==='cohort'?'COHORT':'TEACHER';
+}
+
+function animKpi(id,val){
+  const el=document.getElementById(id);
+  el.style.opacity='.3'; el.style.transform='translateY(5px)';
+  setTimeout(()=>{
+    el.textContent=val;
+    el.style.transition='opacity .2s,transform .2s';
+    el.style.opacity='1'; el.style.transform='none';
+  },70);
+}
+
+function renderBands(d){
+  const bands=[
+    {label:'92–100',name:'Distinguished',count:d.dis,color:'var(--dis)'},
+    {label:'80–91', name:'Proficient',   count:d.pro,color:'var(--pro)'},
+    {label:'68–79', name:'Developing',   count:d.dev,color:'var(--dev)'},
+    {label:'0–67',  name:'Beginning',    count:d.beg,color:'var(--beg)'},
+  ];
+  document.getElementById('band-bars').innerHTML = bands.map(b=>{
+    const pct = b.count/d.n*100;
+    const isNarrow = pct < 18;
+    return `<div class="band-row">
+      <div class="band-label">${b.label}</div>
+      <div class="band-track">
+        <div class="band-fill" style="width:${pct}%;background:${b.color};${isNarrow?'overflow:visible;':''}">
+          ${isNarrow?'': `<span class="band-fill-label">${b.name} &nbsp;${pct.toFixed(0)}%</span>`}
+        </div>
+        ${isNarrow?`<span class="band-fill-label-out" style="color:${b.color}">${b.name} &nbsp;${pct.toFixed(0)}%</span>`:''}
+      </div>
+      <div class="band-count">${b.count}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderGaugeStats(d){
+  document.getElementById('gauge-stats').innerHTML = `
+    <div class="gs-row"><span class="gs-label" style="color:var(--dis)">Distinguished</span><span class="gs-value" style="color:var(--dis)">${d.dis} <small style="opacity:.55;font-size:8px">(${(d.dis/d.n*100).toFixed(0)}%)</small></span></div>
+    <div class="gs-row"><span class="gs-label" style="color:var(--pro)">Proficient</span><span class="gs-value" style="color:var(--pro)">${d.pro} <small style="opacity:.55;font-size:8px">(${(d.pro/d.n*100).toFixed(0)}%)</small></span></div>
+    <div class="gs-row"><span class="gs-label" style="color:var(--dev)">Developing</span><span class="gs-value" style="color:var(--dev)">${d.dev} <small style="opacity:.55;font-size:8px">(${(d.dev/d.n*100).toFixed(0)}%)</small></span></div>
+    <div class="gs-row"><span class="gs-label" style="color:var(--beg)">Beginning</span><span class="gs-value" style="color:var(--beg)">${d.beg} <small style="opacity:.55;font-size:8px">(${(d.beg/d.n*100).toFixed(0)}%)</small></span></div>
+  `;
+}
+
+function renderTable(activeKey){
+  document.getElementById('comp-tbody').innerHTML = ORDER.map(k=>{
+    const d=TEACHERS[k]; const pr=profRate(d);
+    const pc=pr>=50?'rate-good':pr>=35?'rate-mid':'rate-bad';
+    const cc=d.ccrpiPct>=60?'rate-good':d.ccrpiPct>=50?'rate-mid':'rate-bad';
+    return `<tr class="${k===activeKey?'row-active':''}" onclick="select('${k}')">
+      <td><span class="t-name-cell"><span class="t-dot" style="background:${d.color}"></span>${d.name}</span></td>
+      <td style="color:var(--t2);font-family:var(--mono)">${d.n}</td>
+      <td>
+        <div class="mini-bar-wrap">
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${pr}%;background:${d.color}"></div></div>
+          <span class="rate-pill ${pc}">${pr.toFixed(1)}%</span>
+        </div>
+      </td>
+      <td><span class="rate-pill ${cc}">${d.ccrpiPct}%</span></td>
+      <td style="color:var(--t2)">${d.ccrpiPts}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildTargetsGrid(subgroups){
+  document.getElementById('tgt-grid').innerHTML = subgroups.map(t => {
+    if(!t.sufficient){
+      return `<div class="tgt-card insuf">
+        <div class="tgt-card-group">${t.group}<span>${t.note||'Insufficient data'}</span></div>
+        <div style="font-size:10px;color:var(--t3);margin-top:auto;">Data not reportable</div>
+      </div>`;
+    }
+    const pct2025 = (t.score2025/100)*100;
+    const pct2026 = (t.target2026/100)*100;
+    const scoreColor = t.score2025>=50?'var(--emerald)':t.score2025>=35?'var(--amber)':'var(--rose)';
+    return `<div class="tgt-card">
+      <div class="tgt-card-group">${t.group}<span>Subgroup Reporting Label</span></div>
+      <div class="tgt-scores">
+        <div class="tgt-score-item">
+          <div class="tgt-score-val" style="color:${scoreColor}">${t.score2025}</div>
+          <div class="tgt-score-lbl">2025 Score</div>
+        </div>
+        <div class="tgt-arrow">→</div>
+        <div class="tgt-score-item">
+          <div class="tgt-score-val" style="color:var(--emerald)">${t.target2026}</div>
+          <div class="tgt-score-lbl">2026 Target</div>
+        </div>
+      </div>
+      <div class="tgt-bar-wrap">
+        <div class="tgt-bar-bg">
+          <div class="tgt-bar-fill" style="width:${pct2025}%;background:${scoreColor}"></div>
+          <div class="tgt-bar-target" style="left:${pct2026}%"></div>
+        </div>
+      </div>
+      <div class="tgt-growth">▲ +${t.growth} pts growth target</div>
+    </div>`;
+  }).join('');
+}
+
+function buildCompare(){
+  const BANDS = [
+    { key:'beg', canvasId:'cmpBeg', color:'#f43f5e' },
+    { key:'dev', canvasId:'cmpDev', color:'#fb923c' },
+    { key:'pro', canvasId:'cmpPro', color:'#34d399' },
+    { key:'dis', canvasId:'cmpDis', color:'#22d3ee' },
+  ];
+  BANDS.forEach(band => {
+    const sorted = [...ORDER].sort((a,b)=>
+      (TEACHERS[a][band.key]/TEACHERS[a].n)-(TEACHERS[b][band.key]/TEACHERS[b].n)
+    );
+    const labels   = sorted.map(k=>TEACHERS[k].name);
+    const values   = sorted.map(k=>parseFloat((TEACHERS[k][band.key]/TEACHERS[k].n*100).toFixed(1)));
+    const bgColors = sorted.map(k=>TEACHER_COLORS[k]+'bb');
+    const bdColors = sorted.map(k=>TEACHER_COLORS[k]);
+    const ctx = document.getElementById(band.canvasId).getContext('2d');
+    new Chart(ctx,{
+      type:'bar',
+      data:{labels,datasets:[{data:values,backgroundColor:bgColors,borderColor:bdColors,borderWidth:1.5,borderRadius:5,borderSkipped:false}]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{
+          backgroundColor:'#131c30',borderColor:'#1e2d45',borderWidth:1,
+          titleColor:'#f0f6ff',bodyColor:'#8ba4c0',
+          titleFont:{family:"'Outfit',sans-serif",size:11,weight:'700'},
+          bodyFont:{family:"'JetBrains Mono',monospace",size:10},
+          callbacks:{
+            title:items=>labels[items[0].dataIndex],
+            label:c=>{const k=sorted[c.dataIndex];return ` ${c.parsed.y}%  (${TEACHERS[k][band.key]} of ${TEACHERS[k].n} students)`;}
+          }
+        }},
+        scales:{
+          x:{grid:{display:false},border:{color:'transparent'},ticks:{font:{family:"'Outfit',sans-serif",size:11,weight:'600'},color:'#8ba4c0'}},
+          y:{min:0,suggestedMax:55,grid:{color:'rgba(255,255,255,.04)'},border:{color:'transparent'},
+            ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#4a6278',callback:v=>v+'%',maxTicksLimit:6}}
+        }
+      }
+    });
+  });
+}
+
+// ── TAB SWITCHING ────────────────────────────────────────
+function switchTab(tab){
+  ['dashboard','targets','compare'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  document.getElementById('dashboard-body').style.display = tab==='dashboard'?'grid':'none';
+  document.getElementById('targets-view').classList.toggle('visible', tab==='targets');
+  document.getElementById('compare-view').classList.toggle('visible', tab==='compare');
+}
+
+// ── INIT ────────────────────────────────────────────────
+buildGauge();
+buildTeacherChart();
+buildTargetsGrid(CONTENT.biology.targets.subgroups);
+buildCompare();
+rebuildSidebar();
+select('cohort');
+</script>
+</body>
+</html>
