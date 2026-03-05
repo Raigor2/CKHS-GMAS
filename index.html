@@ -229,17 +229,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .chart-wrap{flex:1;min-height:0;position:relative;}
 
 /* Band bars */
-.band-bars{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center;}
-.band-row{display:flex;align-items:center;gap:9px;}
+.band-bars{display:flex;flex-direction:column;gap:6px;flex:1;padding:4px 0;}
+.band-row{display:flex;align-items:center;gap:9px;flex:1;min-height:0;}
 .band-label{font-size:9px;font-weight:600;color:var(--t2);width:72px;flex-shrink:0;text-align:right;font-family:var(--mono);}
-.band-track{flex:1;height:24px;background:var(--s2);border-radius:3px;overflow:visible;position:relative;display:flex;align-items:center;}
+.band-track{flex:1;height:100%;min-height:28px;max-height:56px;background:var(--s2);border-radius:4px;overflow:visible;position:relative;display:flex;align-items:center;}
 .band-fill{
-  height:100%;border-radius:3px;display:flex;align-items:center;padding-left:8px;
+  height:100%;border-radius:4px;display:flex;align-items:center;padding-left:10px;
   transition:width .55s cubic-bezier(.4,0,.2,1);min-width:0;flex-shrink:0;
 }
-.band-fill-label{font-size:9px;font-weight:700;font-family:var(--mono);color:rgba(255,255,255,.9);white-space:nowrap;}
-.band-fill-label-out{font-size:9px;font-weight:700;font-family:var(--mono);white-space:nowrap;margin-left:6px;}
-.band-count{font-size:10px;font-family:var(--mono);font-weight:700;color:var(--t2);width:26px;text-align:right;flex-shrink:0;}
+.band-fill-label{font-size:10px;font-weight:700;font-family:var(--mono);color:rgba(255,255,255,.9);white-space:nowrap;}
+.band-fill-label-out{font-size:10px;font-weight:700;font-family:var(--mono);white-space:nowrap;margin-left:8px;}
+.band-count{font-size:11px;font-family:var(--mono);font-weight:700;color:var(--t2);width:28px;text-align:right;flex-shrink:0;}
 
 /* Gauge */
 .gauge-wrap{display:flex;align-items:center;justify-content:center;gap:22px;flex:1;}
@@ -706,7 +706,7 @@ function renderBands(d){
   ];
   document.getElementById('band-bars').innerHTML = bands.map(b=>{
     const pct = b.count/d.n*100;
-    const isNarrow = pct < 18;
+    const isNarrow = pct < 15;
     return `<div class="band-row">
       <div class="band-label">${b.label}</div>
       <div class="band-track">
@@ -1051,7 +1051,7 @@ function renderBands(d){
   ];
   document.getElementById('band-bars').innerHTML = bands.map(b=>{
     const pct = b.count/d.n*100;
-    const isNarrow = pct < 18;
+    const isNarrow = pct < 15;
     return `<div class="band-row">
       <div class="band-label">${b.label}</div>
       <div class="band-track">
